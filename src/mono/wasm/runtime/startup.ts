@@ -517,7 +517,7 @@ async function mono_download_assets(config: MonoConfig | MonoConfigError | undef
                         attemptUrl = locateFile(config.assembly_root + "/" + path);
                     }
                     else
-                        attemptUrl = asset.name;
+                        attemptUrl = locateFile(asset.name);
                 } else {
                     attemptUrl = sourcePrefix + asset.name;
                 }
