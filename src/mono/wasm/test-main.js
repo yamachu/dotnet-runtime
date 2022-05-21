@@ -143,7 +143,7 @@ loadDotnet("./dotnet.js").then((createDotnetRuntime) => {
     return createDotnetRuntime(({ MONO, INTERNAL, BINDING, Module }) => ({
         disableDotnet6Compatibility: true,
         config: null,
-        configSrc: "./mono-config.json",
+        configSrc: processedArguments.run_deep_working_dir ? "./AppBundle/mono-config.json" : "./mono-config.json",
         onConfigLoaded: (config) => {
             if (!Module.config) {
                 const err = new Error("Could not find ./mono-config.json. Cancelling run");
@@ -304,6 +304,7 @@ function processArguments(incomingArguments) {
     let enable_gc = true;
     let diagnostic_tracing = false;
     let working_dir = '/';
+    let run_deep_working_dir = false;
     while (incomingArguments && incomingArguments.length > 0) {
         const currentArg = incomingArguments[0];
         if (currentArg.startsWith("--profile=")) {
@@ -343,6 +344,9 @@ function processArguments(incomingArguments) {
             } else {
                 console.warn("--fetch-random-delay only works on browser")
             }
+        } else if (currentArg.startsWith("--run-deep-work-dir=")) {
+            const arg = currentArg.substring("--run-deep-work-dir=".length);
+            run_deep_working_dir = arg === 'true';
         } else {
             break;
         }
@@ -363,6 +367,7 @@ function processArguments(incomingArguments) {
         enable_gc,
         diagnostic_tracing,
         working_dir,
+        run_deep_working_dir,
     }
 }
 

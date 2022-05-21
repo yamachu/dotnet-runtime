@@ -152,12 +152,20 @@ namespace Wasm.Build.Tests
                     envVars[kvp.Key] = kvp.Value;
             }
 
-            string bundleDir = Path.Combine(GetBinDir(baseDir: buildDir, config: buildArgs.Config, targetFramework: targetFramework), "AppBundle");
-            (string testCommand, string extraXHarnessArgs) = host switch
+            bool runDeepWorkDir = false;
+            if (extraXHarnessMonoArgs?.Contains("--run-deep-work-dir=true") ?? false)
             {
-                RunHost.V8     => ("wasm test", "--js-file=test-main.js --engine=V8 -v trace"),
-                RunHost.NodeJS => ("wasm test", "--js-file=test-main.js --engine=NodeJS -v trace"),
-                _              => ("wasm test-browser", $"-v trace -b {host}")
+                runDeepWorkDir = true;
+            }
+
+            string bundleDir = Path.Combine(GetBinDir(baseDir: buildDir, config: buildArgs.Config, targetFramework: targetFramework), "AppBundle");
+            (string testCommand, string extraXHarnessArgs) = (host, runDeepWorkDir) switch
+            {
+                (RunHost.V8, false)     => ("wasm test", "--js-file=test-main.js --engine=V8 -v trace"),
+                (RunHost.V8, true)      => ("wasm test", "--js-file=AppBundle/test-main.js --engine=V8 -v trace"),
+                (RunHost.NodeJS, false) => ("wasm test", "--js-file=test-main.js --engine=NodeJS -v trace"),
+                (RunHost.NodeJS, true)  => ("wasm test", "--js-file=AppBundle/test-main.js --engine=NodeJS -v trace"),
+                _                       => ("wasm test-browser", $"-v trace -b {host}")
             };
 
             string testLogPath = Path.Combine(_logPath, host.ToString());
