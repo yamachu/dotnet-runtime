@@ -143,7 +143,7 @@ loadDotnet("./dotnet.js").then((createDotnetRuntime) => {
     return createDotnetRuntime(({ MONO, INTERNAL, BINDING, Module }) => ({
         disableDotnet6Compatibility: true,
         config: null,
-        configSrc: processedArguments.run_deep_working_dir ? "./AppBundle/mono-config.json" : "./mono-config.json",
+        configSrc: "./mono-config.json",
         onConfigLoaded: (config) => {
             if (!Module.config) {
                 const err = new Error("Could not find ./mono-config.json. Cancelling run");

@@ -670,10 +670,11 @@ export function mono_wasm_load_data_archive(data: Uint8Array, prefix: string): b
  */
 export async function mono_wasm_load_config(configFilePath: string): Promise<void> {
     const module = Module;
+    const resolvedConfigFilePath = locateFile(configFilePath);
     try {
-        module.addRunDependency(configFilePath);
+        module.addRunDependency(resolvedConfigFilePath);
 
-        const configRaw = await runtimeHelpers.fetch(configFilePath);
+        const configRaw = await runtimeHelpers.fetch(resolvedConfigFilePath);
         const config = await configRaw.json();
 
         runtimeHelpers.config = config;
@@ -681,9 +682,9 @@ export async function mono_wasm_load_config(configFilePath: string): Promise<voi
         config.assets = config.assets || [];
         config.runtime_options = config.runtime_options || [];
         config.globalization_mode = config.globalization_mode || GlobalizationMode.AUTO;
-        Module.removeRunDependency(configFilePath);
+        Module.removeRunDependency(resolvedConfigFilePath);
     } catch (err) {
-        const errMessage = `Failed to load config file ${configFilePath} ${err}`;
+        const errMessage = `Failed to load config file ${resolvedConfigFilePath} ${err}`;
         Module.printErr(errMessage);
         runtimeHelpers.config = { message: errMessage, error: err, isError: true };
         runtime_is_initialized_reject(err);
