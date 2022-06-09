@@ -71,7 +71,7 @@ namespace Wasm.Build.Tests
 
                 Console.WriteLine ("");
                 Console.WriteLine ($"==============================================================================================");
-                Console.WriteLine ($"=============== Running with {(s_buildEnv.IsWorkload ? "Workloads" : "EMSDK")} ===============");
+                Console.WriteLine ($"=============== Running with {(s_buildEnv.IsWorkload ? "Workloads" : "No workloads")} ===============");
                 Console.WriteLine ($"==============================================================================================");
                 Console.WriteLine ("");
             }
@@ -85,7 +85,6 @@ namespace Wasm.Build.Tests
         public BuildTestBase(ITestOutputHelper output, SharedBuildPerTestClassFixture buildContext)
         {
             _testIdx = Interlocked.Increment(ref s_testCounter);
-            Console.WriteLine($"-------- New test #{_testIdx} --------");
             _buildContext = buildContext;
             _testOutput = output;
             _logPath = s_buildEnv.LogRootPath; // FIXME:
@@ -165,7 +164,7 @@ namespace Wasm.Build.Tests
                 (RunHost.V8, true)      => ("wasm test", "--js-file=AppBundle/test-main.js --engine=V8 -v trace"),
                 (RunHost.NodeJS, false) => ("wasm test", "--js-file=test-main.js --engine=NodeJS -v trace"),
                 (RunHost.NodeJS, true)  => ("wasm test", "--js-file=AppBundle/test-main.js --engine=NodeJS -v trace"),
-                _                       => ("wasm test-browser", $"-v trace -b {host}")
+                _                       => ("wasm test-browser", $"-v trace -b {host} --web-server-use-cop")
             };
 
             string testLogPath = Path.Combine(_logPath, host.ToString());
@@ -518,7 +517,8 @@ namespace Wasm.Build.Tests
                 "dotnet.timezones.blat",
                 "dotnet.wasm",
                 "mono-config.json",
-                "dotnet.js"
+                "dotnet.js",
+                "dotnet-crypto-worker.js"
             });
 
             AssertFilesExist(bundleDir, new[] { "run-v8.sh" }, expectToExist: hasV8Script);
@@ -841,7 +841,6 @@ namespace Wasm.Build.Tests
 
         public void Dispose()
         {
-            Console.WriteLine($"-------- test done #{_testIdx} --------");
             if (_projectDir != null && _enablePerTestCleanup)
                 _buildContext.RemoveFromCache(_projectDir, keepDir: s_skipProjectCleanup);
         }
