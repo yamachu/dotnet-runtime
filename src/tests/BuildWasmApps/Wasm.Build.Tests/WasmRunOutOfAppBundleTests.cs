@@ -21,10 +21,12 @@ namespace Wasm.Build.Tests
                 .UnwrapItemsAsArrays();
 
         [Theory]
-        // NOTE: V8 and Chrome now fail
-        // Ref: https://github.com/dotnet/runtime/issues/69259
-        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ true, RunHost.NodeJS })]
+        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ false, RunHost.V8 })]
+        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ false, RunHost.Chrome })]
         [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ false, RunHost.NodeJS })]
+        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ true, RunHost.V8 })]
+        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ true, RunHost.Chrome })]
+        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ true, RunHost.NodeJS })]
         public void RunOutOfAppBundle(BuildArgs buildArgs, RunHost host, string id)
         {
             buildArgs = buildArgs with { ProjectName = $"outofappbundle_{buildArgs.Config}_{buildArgs.AOT}" };
@@ -34,7 +36,8 @@ namespace Wasm.Build.Tests
                             id: id,
                             new BuildProjectOptions(
                                 InitProject: () => File.WriteAllText(Path.Combine(_projectDir!, "Program.cs"), s_mainReturns42),
-                                DotnetWasmFromRuntimePack: !(buildArgs.AOT || buildArgs.Config == "Release")));
+                                DotnetWasmFromRuntimePack: !(buildArgs.AOT || buildArgs.Config == "Release"),
+                                UseCache: false));
 
             string binDir = GetBinDir(baseDir: _projectDir!, config: buildArgs.Config);
             string baseBundleDir = Path.Combine(binDir, "AppBundle");
@@ -52,7 +55,7 @@ namespace Wasm.Build.Tests
                 string indexHtmlPath = Path.Combine(baseBundleDir, "index.html");
                 if (!File.Exists(indexHtmlPath))
                 {
-                    var html = @"<html><body><script type=""text/javascript"" src=""AppBundle/test-main.js""></script></body></html>";
+                    var html = @"<html><body><script type=""module"" src=""AppBundle/test-main.js""></script></body></html>";
                     File.WriteAllText(indexHtmlPath, html);
                 }
             }
