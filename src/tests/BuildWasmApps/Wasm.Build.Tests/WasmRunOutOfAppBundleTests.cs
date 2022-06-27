@@ -1,7 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Collections.Generic;
 using System.IO;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,18 +14,13 @@ namespace Wasm.Build.Tests
         public WasmRunOutOfAppBundleTests(ITestOutputHelper output, SharedBuildPerTestClassFixture buildContext) : base(output, buildContext)
         {}
 
-        public static IEnumerable<object?[]> MainMethodTestData(bool aot, RunHost host)
-            => ConfigWithAOTData(aot)
-                .WithRunHosts(host)
-                .UnwrapItemsAsArrays();
-
         [Theory]
-        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ false, RunHost.V8 })]
-        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ false, RunHost.Chrome })]
-        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ false, RunHost.NodeJS })]
-        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ true, RunHost.V8 })]
-        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ true, RunHost.Chrome })]
-        [MemberData(nameof(MainMethodTestData), parameters: new object[] { /*aot*/ true, RunHost.NodeJS })]
+        [BuildAndRun(aot: false, host: RunHost.V8)]
+        [BuildAndRun(aot: true, host: RunHost.V8)]
+        [BuildAndRun(aot: false, host: RunHost.Chrome)]
+        [BuildAndRun(aot: true, host: RunHost.Chrome)]
+        [BuildAndRun(aot: false, host: RunHost.NodeJS)]
+        [BuildAndRun(aot: true, host: RunHost.NodeJS)]
         public void RunOutOfAppBundle(BuildArgs buildArgs, RunHost host, string id)
         {
             buildArgs = buildArgs with { ProjectName = $"outofappbundle_{buildArgs.Config}_{buildArgs.AOT}" };
