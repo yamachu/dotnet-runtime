@@ -354,6 +354,9 @@ let toAbsoluteUrl = function (path, prefix) {
         }
         return prefix + path;
     }
+    // **NOTE** In ESModules and NodeJS environment, until dotnet.wasm is loaded, __dirname is empty, so scriptDirectory is treated as "/".
+    // https://github.com/emscripten-core/emscripten/blob/4b5c4f0694174e081661944ab3ffdb43dd1949b8/src/shell.js#L198
+    // Therefore, dotnet.wasm is read without prefix.
     if (prefix.startsWith("/")) {
         return path;
     }
