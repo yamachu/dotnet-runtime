@@ -9,6 +9,7 @@
 //glue code to deal with the differences between chrome, ch, d8, jsc and sm.
 const is_browser = typeof window != "undefined";
 const is_node = !is_browser && typeof process === 'object' && typeof process.versions === 'object' && typeof process.versions.node === 'string';
+const is_shell = !is_browser && !is_node;
 
 if (is_node && process.versions.node.split(".")[0] < 14) {
     throw new Error(`NodeJS at '${process.execPath}' has too low version '${process.versions.node}'`);
@@ -345,6 +346,14 @@ if (typeof globalThis.crypto === 'undefined') {
 }
 
 let toAbsoluteUrl = function (path, prefix) {
+    if (is_shell) {
+        // **NOTE** when loading dotnet.wasm,
+        // it returns a test dependent relative path because scriptDirectory(prefix) is an empty string.
+        if (prefix === "" && runArgs.deepWorkDir) {
+            return "./AppBundle/" + path;
+        }
+        return prefix + path;
+    }
     if (prefix.startsWith("/")) {
         return path;
     }
@@ -396,7 +405,10 @@ Promise.all([argsPromise, loadDotnetPromise]).then(async ([_, createDotnetRuntim
         disableDotnet6Compatibility: true,
         config: null,
         configSrc: "./mono-config.json",
-        locateFile: toAbsoluteUrl,
+        // URL class is undefined on V8(is_shell)
+        // To bypass assigning wasmBinaryFile variable in https://github.com/emscripten-core/emscripten/blob/4b5c4f0694174e081661944ab3ffdb43dd1949b8/src/preamble.js#L792-L793 ,
+        // pass implementation of locateFile
+        locateFile: is_browser || is_shell ? toAbsoluteUrl : undefined,
         onConfigLoaded: (config) => {
             if (!Module.config) {
                 const err = new Error("Could not find ./mono-config.json. Cancelling run");
