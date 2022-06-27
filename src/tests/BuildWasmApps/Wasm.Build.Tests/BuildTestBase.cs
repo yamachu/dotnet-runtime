@@ -152,7 +152,7 @@ namespace Wasm.Build.Tests
             }
 
             bool runDeepWorkDir = false;
-            if (extraXHarnessMonoArgs?.Contains("--run-deep-work-dir=true") ?? false)
+            if (extraXHarnessMonoArgs?.Contains("--deep-work-dir") ?? false)
             {
                 runDeepWorkDir = true;
             }

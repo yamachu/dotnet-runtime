@@ -57,7 +57,7 @@ namespace Wasm.Build.Tests
                 }
             }
 
-            RunAndTestWasmApp(buildArgs, expectedExitCode: 42, host: host, id: id, extraXHarnessMonoArgs: "--run-deep-work-dir=true");
+            RunAndTestWasmApp(buildArgs, expectedExitCode: 42, host: host, id: id, extraXHarnessMonoArgs: "--deep-work-dir");
         }
     }
 }
