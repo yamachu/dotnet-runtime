@@ -344,15 +344,6 @@ if (typeof globalThis.crypto === 'undefined') {
     }
 }
 
-let toAbsoluteUrl;
-if (is_browser) {
-    const anchorTagForAbsoluteUrlConversions = document.createElement('a');
-    toAbsoluteUrl = function toAbsoluteUrl(path, prefix) {
-        anchorTagForAbsoluteUrlConversions.href = prefix + path;
-        return anchorTagForAbsoluteUrlConversions.href;
-    }
-}
-
 Promise.all([argsPromise, loadDotnetPromise]).then(async ([_, createDotnetRuntime]) => {
     applyArguments();
 
@@ -391,7 +382,6 @@ Promise.all([argsPromise, loadDotnetPromise]).then(async ([_, createDotnetRuntim
         disableDotnet6Compatibility: true,
         config: null,
         configSrc: "./mono-config.json",
-        locateFile: toAbsoluteUrl,
         onConfigLoaded: (config) => {
             if (!Module.config) {
                 const err = new Error("Could not find ./mono-config.json. Cancelling run");
