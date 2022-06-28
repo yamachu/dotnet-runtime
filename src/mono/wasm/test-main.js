@@ -159,7 +159,6 @@ function initRunArgs() {
     runArgs.enableGC = runArgs.enableGC === undefined ? true : runArgs.enableGC;
     runArgs.diagnosticTracing = runArgs.diagnosticTracing === undefined ? false : runArgs.diagnosticTracing;
     runArgs.debugging = runArgs.debugging === undefined ? false : runArgs.debugging;
-    runArgs.deepWorkDir = runArgs.deepWorkDir === undefined ? false : runArgs.deepWorkDir;
     // default'ing to true for tests, unless debugging
     runArgs.forwardConsole = runArgs.forwardConsole === undefined ? !runArgs.debugging : runArgs.forwardConsole;
 }
@@ -212,7 +211,8 @@ function processQueryArguments(incomingArguments) {
                 console.warn("--fetch-random-delay only works on browser")
             }
         } else if (currentArg == ("--deep-work-dir")) {
-            runArgs.deepWorkDir = true;
+            // PR: https://github.com/dotnet/runtime/pull/69441
+            // NOP
         } else {
             break;
         }
