@@ -345,23 +345,7 @@ if (typeof globalThis.crypto === 'undefined') {
     }
 }
 
-let toAbsoluteUrl = function (path, prefix) {
-    if (is_shell) {
-        // **NOTE** when loading dotnet.wasm,
-        // it returns a test dependent relative path because scriptDirectory(prefix) is an empty string.
-        if (prefix === "" && runArgs.deepWorkDir) {
-            return "./AppBundle/" + path;
-        }
-        return prefix + path;
-    }
-    // **NOTE** In ESModules and NodeJS environment, until dotnet.wasm is loaded, __dirname is empty, so scriptDirectory is treated as "/".
-    // https://github.com/emscripten-core/emscripten/blob/4b5c4f0694174e081661944ab3ffdb43dd1949b8/src/shell.js#L198
-    // Therefore, dotnet.wasm is read without prefix.
-    if (prefix.startsWith("/")) {
-        return path;
-    }
-    return prefix + path;
-}
+let toAbsoluteUrl;
 if (is_browser) {
     const anchorTagForAbsoluteUrlConversions = document.createElement('a');
     toAbsoluteUrl = function toAbsoluteUrl(path, prefix) {
@@ -408,10 +392,7 @@ Promise.all([argsPromise, loadDotnetPromise]).then(async ([_, createDotnetRuntim
         disableDotnet6Compatibility: true,
         config: null,
         configSrc: "./mono-config.json",
-        // URL class is undefined on V8(is_shell)
-        // To bypass assigning wasmBinaryFile variable in https://github.com/emscripten-core/emscripten/blob/4b5c4f0694174e081661944ab3ffdb43dd1949b8/src/preamble.js#L792-L793 ,
-        // pass implementation of locateFile
-        locateFile: is_browser || is_shell ? toAbsoluteUrl : undefined,
+        locateFile: toAbsoluteUrl,
         onConfigLoaded: (config) => {
             if (!Module.config) {
                 const err = new Error("Could not find ./mono-config.json. Cancelling run");
