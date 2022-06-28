@@ -9,7 +9,6 @@
 //glue code to deal with the differences between chrome, ch, d8, jsc and sm.
 const is_browser = typeof window != "undefined";
 const is_node = !is_browser && typeof process === 'object' && typeof process.versions === 'object' && typeof process.versions.node === 'string';
-const is_shell = !is_browser && !is_node;
 
 if (is_node && process.versions.node.split(".")[0] < 14) {
     throw new Error(`NodeJS at '${process.execPath}' has too low version '${process.versions.node}'`);
