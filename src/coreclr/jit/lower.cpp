@@ -1071,7 +1071,7 @@ GenTree* Lowering::NewPutArg(GenTreeCall* call, GenTree* arg, CallArg* callArg, 
     // Struct can be split into register(s) and stack on ARM
     if (compFeatureArgSplit() && callArg->AbiInfo.IsSplit())
     {
-        assert(arg->OperGet() == GT_OBJ || arg->OperGet() == GT_FIELD_LIST);
+        assert(arg->OperIs(GT_OBJ, GT_FIELD_LIST) || arg->OperIsLocalRead());
         // TODO: Need to check correctness for FastTailCall
         if (call->IsFastTailCall())
         {
@@ -1095,23 +1095,7 @@ GenTree* Lowering::NewPutArg(GenTreeCall* call, GenTree* arg, CallArg* callArg, 
             argSplit->SetRegNumByIdx(callArg->AbiInfo.GetRegNum(regIndex), regIndex);
         }
 
-        if (arg->OperGet() == GT_OBJ)
-        {
-            arg->SetContained();
-            if (arg->AsObj()->Addr()->OperGet() == GT_LCL_VAR_ADDR)
-            {
-                MakeSrcContained(arg, arg->AsObj()->Addr());
-            }
-
-            ClassLayout* layout = arg->AsObj()->GetLayout();
-
-            // Set type of registers
-            for (unsigned index = 0; index < callArg->AbiInfo.NumRegs; index++)
-            {
-                argSplit->m_regType[index] = layout->GetGCPtrType(index);
-            }
-        }
-        else
+        if (arg->OperIs(GT_FIELD_LIST))
         {
             unsigned regIndex = 0;
             for (GenTreeFieldList::Use& use : arg->AsFieldList()->Uses())
@@ -1132,6 +1116,16 @@ GenTree* Lowering::NewPutArg(GenTreeCall* call, GenTree* arg, CallArg* callArg, 
 
             // Clear the register assignment on the fieldList node, as these are contained.
             arg->SetRegNum(REG_NA);
+        }
+        else
+        {
+            ClassLayout* layout = arg->GetLayout(comp);
+
+            // Set type of registers
+            for (unsigned index = 0; index < callArg->AbiInfo.NumRegs; index++)
+            {
+                argSplit->m_regType[index] = layout->GetGCPtrType(index);
+            }
         }
     }
     else
@@ -1267,13 +1261,7 @@ void Lowering::LowerArg(GenTreeCall* call, CallArg* callArg, bool late)
     DISPNODE(arg);
     assert(arg->IsValue());
 
-    var_types type = arg->TypeGet();
-
-    if (varTypeIsSmall(type))
-    {
-        // Normalize 'type', it represents the item that we will be storing in the Outgoing Args
-        type = TYP_INT;
-    }
+    var_types type = genActualType(arg);
 
 #if defined(FEATURE_SIMD)
 #if defined(TARGET_X86)
@@ -1382,9 +1370,9 @@ void Lowering::LowerArg(GenTreeCall* call, CallArg* callArg, bool late)
 
     arg = *ppArg;
 
-    if (arg->OperIs(GT_PUTARG_STK))
+    if (arg->OperIsPutArgStk() || arg->OperIsPutArgSplit())
     {
-        LowerPutArgStk(arg->AsPutArgStk());
+        LowerPutArgStkOrSplit(arg->AsPutArgStk());
     }
 }
 
@@ -6407,8 +6395,7 @@ PhaseStatus Lowering::DoPhase()
     // local var liveness can delete code, which may create empty blocks
     if (comp->opts.OptimizationEnabled())
     {
-        comp->optLoopsMarked = false;
-        bool modified        = comp->fgUpdateFlowGraph();
+        bool modified = comp->fgUpdateFlowGraph();
         modified |= comp->fgRemoveDeadBlocks();
 
         if (modified)
