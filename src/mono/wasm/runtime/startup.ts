@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 import { AllAssetEntryTypes, mono_assert, AssetEntry, CharPtrNull, DotnetModule, GlobalizationMode, MonoConfig, MonoConfigError, wasm_type_symbol, MonoObject } from "./types";
-import { ENVIRONMENT_IS_ESM, ENVIRONMENT_IS_NODE, ENVIRONMENT_IS_SHELL, INTERNAL, locateFile, Module, MONO, requirePromise, runtimeHelpers } from "./imports";
+import { ENVIRONMENT_IS_ESM, ENVIRONMENT_IS_NODE, ENVIRONMENT_IS_SHELL, ENVIRONMENT_IS_WEB, INTERNAL, locateFile, Module, MONO, requirePromise, runtimeHelpers } from "./imports";
 import cwraps from "./cwraps";
 import { mono_wasm_raise_debug_event, mono_wasm_runtime_ready } from "./debug";
 import GuardedPromise from "./guarded-promise";
@@ -675,6 +675,16 @@ export function mono_wasm_load_data_archive(data: Uint8Array, prefix: string): b
     return true;
 }
 
+function is_path_absolute(path: string): boolean {
+    if (ENVIRONMENT_IS_NODE || ENVIRONMENT_IS_SHELL) {
+        return path.startsWith("/") || path.indexOf(":") !== -1;
+    }
+    if (ENVIRONMENT_IS_WEB) {
+        return path.indexOf("://") !== -1;
+    }
+    return false;
+}
+
 /**
  * Loads the mono config file (typically called mono-config.json) asynchroniously
  * Note: the run dependencies are so emsdk actually awaits it in order.
@@ -684,7 +694,7 @@ export function mono_wasm_load_data_archive(data: Uint8Array, prefix: string): b
  */
 export async function mono_wasm_load_config(configFilePath: string): Promise<void> {
     const module = Module;
-    const resolvedConfigFilePath = locateFile(configFilePath);
+    const resolvedConfigFilePath = is_path_absolute(configFilePath) ? configFilePath : locateFile(configFilePath);
     try {
         module.addRunDependency(resolvedConfigFilePath);
 
